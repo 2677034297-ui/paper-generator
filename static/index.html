@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI论文生成系统 | 智能学术写作助手</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: linear-gradient(135deg, #0f172a, #111827);
+      min-height: 100vh;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    /* 背景光晕效果 */
+    .bg-blur {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      z-index: 0;
+    }
+
+    .blur1 {
+      background: #3b82f6;
+      top: -150px;
+      left: -120px;
+    }
+
+    .blur2 {
+      background: #8b5cf6;
+      bottom: -180px;
+      right: -100px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #94a3b8;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 14px;
+      color: #60a5fa;
+      margin-bottom: 20px;
+    }
+
+    /* 卡片组件 */
+    .card {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 24px;
+      padding: 32px;
+      transition: all 0.3s ease;
+    }
+
+    /* 输入区域 */
+    .input-section {
+      margin-bottom: 32px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 16px 20px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      color: white;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .input-group input::placeholder {
+      color: #64748b;
+    }
+
+    .generate-btn {
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border: none;
+      border-radius: 16px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+    }
+
+    .generate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 进度提示 */
+    .progress {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #334155;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 论文展示区 */
+    .paper {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #334155;
+    }
+
+    .paper h2 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #f1f5f9;
+    }
+
+    .paper h3 {
+      font-size: 20px;
+      margin: 24px 0 12px;
+      color: #94a3b8;
+      padding-left: 8px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .paper p {
+      line-height: 1.8;
+      margin: 12px 0;
+      color: #cbd5e1;
+      text-align: justify;
+    }
+
+    .keywords {
+      background: rgba(59, 130, 246, 0.1);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      padding: 16px;
+      border-radius: 16px;
+      margin-top: 20px;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      .hero h1 {
+        font-size: 36px;
+      }
+      .card {
+        padding: 20px;
+      }
+      .input-group {
+        flex-direction: column;
+      }
+    }
+
+    .copy-btn {
+      background: #334155;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 16px;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blur blur1"></div>
+  <div class="bg-blur blur2"></div>
+
+  <div class="container">
+    <div class="hero">
+      <div class="badge">✨ AI 学术写作助手</div>
+      <h1>论文生成器</h1>
+      <p>输入题目，智能生成完整的学术论文</p>
+    </div>
+
+    <div class="card">
+      <div class="input-section">
+        <div class="input-group">
+          <input type="text" id="titleInput" placeholder="请输入论文题目，例如：人工智能对教育的影响" value="数字时代青年文化认同的建构路径研究">
+          <button class="generate-btn" id="generateBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L15 9M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+            生成论文
+          </button>
+        </div>
+      </div>
+
+      <div class="progress" id="progressBar">
+        <div class="spinner"></div>
+        <span>🤖 AI 正在写作中...</span>
+      </div>
+
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const generateBtn = document.getElementById('generateBtn');
+    const titleInput = document.getElementById('titleInput');
+    const resultDiv = document.getElementById('result');
+    const progressBar = document.getElementById('progressBar');
+
+    generateBtn.addEventListener('click', generate);
+    titleInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') generate();
+    });
+
+    async function generate() {
+      const title = titleInput.value.trim();
+      if (!title) {
+        alert('请输入论文题目');
+        return;
+      }
+
+      generateBtn.disabled = true;
+      progressBar.classList.add('show');
+      resultDiv.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          resultDiv.innerHTML = `<div class="error">❌ 生成失败：${data.error}</div>`;
+        } else {
+          displayPaper(data);
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ 网络错误：${error.message}</div>`;
+      } finally {
+        generateBtn.disabled = false;
+        progressBar.classList.remove('show');
+      }
+    }
+
+    function displayPaper(paper) {
+      let html = '<div class="paper">';
+
+      // 标题
+      html += `<h2>${paper.title || '论文标题'}</h2>`;
+
+      // 摘要
+      if (paper.abstract && paper.abstract.length) {
+        html += '<h3>📖 摘要</h3>';
+        paper.abstract.forEach(p => html += `<p>${p}</p>`);
+      }
+
+      // 关键词
+      if (paper.keywords && paper.keywords.length) {
+        html += `<div class="keywords">🔑 关键词：${paper.keywords.join('；')}</div>`;
+      }
+
+      // 引言
+      if (paper.introduction && paper.introduction.length) {
+        html += '<h3>📌 引言</h3>';
+        paper.introduction.forEach(p => html += `<p>${p}</p>`);
+      }
+
+      // 正文
+      if (paper.body && paper.body.length) {
+        paper.body.forEach(section => {
+          html += `<h3>📄 ${section.subtitle || '正文'}</h3>`;
+          if (section.paragraphs) {
+            section.paragraphs.forEach(p => html += `<p>${p}</p>`);
+          }
+        });
+      }
+
+      // 结论
+      if (paper.conclusion && paper.conclusion.length) {
+        html += '<h3>🎯 结论</h3>';
+        paper.conclusion.forEach(p => html += `<p>${p}</p>`);
+      }
+
+      // 复制按钮
+      html += `<button class="copy-btn" onclick="copyToClipboard()">📋 复制全文</button>`;
+      html += '</div>';
+      
+      resultDiv.innerHTML = html;
+      
+      // 保存全文用于复制
+      window.fullPaperText = document.querySelector('.paper')?.innerText || '';
+    }
+
+    function copyToClipboard() {
+      if (window.fullPaperText) {
+        navigator.clipboard.writeText(window.fullPaperText);
+        alert('✅ 论文已复制到剪贴板');
+      }
+    }
+  </script>
+</body>
+</html>

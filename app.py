@@ -246,8 +246,14 @@ parser = PaperParser()
 ENABLE_POLISH = False  # 设为 True 开启二次润色（会消耗更多 token）
 
 # =========================================================
-# API 路由
+# 路由
 # =========================================================
+
+@app.route("/")
+def index():
+    """返回前端页面"""
+    return send_from_directory("static", "index.html")
+
 
 @app.route("/api/generate", methods=["POST"])
 def generate():

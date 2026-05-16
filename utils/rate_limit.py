@@ -9,9 +9,13 @@ class RateLimiter:
         self.usage = defaultdict(lambda: {"date": None, "count": 0})
     
     def check_and_increment(self, ip):
-        """检查并增加计数，返回 (是否允许, 消息)"""
+        """
+        检查并增加计数
+        返回: (allowed, message)
+        """
         today = date.today()
         
+        # 检查今日是否已使用
         if self.usage[ip]["date"] == today:
             if self.usage[ip]["count"] >= self.daily_limit:
                 return False, f"今日免费额度已用完（每天{self.daily_limit}篇），明天再来吧"
@@ -19,6 +23,7 @@ class RateLimiter:
             self.usage[ip]["date"] = today
             self.usage[ip]["count"] = 0
         
+        # 增加计数
         self.usage[ip]["count"] += 1
         return True, "成功"
     

@@ -1,0 +1,19 @@
+# Next.js
+.next/
+out/
+
+# dependencies
+node_modules/
+
+# env
+.env.local
+.env*.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -11,7 +11,7 @@ export async function callDeepSeek(
   temperature = 0.7
 ): Promise<string> {
   const response = await client.chat.completions.create({
-    model: "deepseek-chat",
+    model: "deepseek-v4-pro",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
